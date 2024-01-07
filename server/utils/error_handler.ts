@@ -1,12 +1,14 @@
 class ErrorHandler extends Error {
-  statusCode: Number;
-
-
-  constructor(message: any, statusCode: Number) {
+  keyValue(keyValue: any) {
+    throw new Error("Method not implemented.");
+  }
+  statusCode: number;
+  path: any;
+  code: number | string | undefined;
+  constructor(message: string, statusCode: number) {
     super(message);
+    Object.setPrototypeOf(this, ErrorHandler.prototype);
     this.statusCode = statusCode;
-
-    Error.captureStackTrace(this, this.constructor);
   }
 }
 

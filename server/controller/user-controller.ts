@@ -2,13 +2,19 @@ import { Request, Response, NextFunction } from "express";
 import userModel, { IUser } from "../models/user-model";
 import ErrorHandler from "../utils/error_handler";
 import { CatchAsyncError } from "../middleware/catch_async_error";
-import Jwt, { Secret } from "jsonwebtoken";
+import Jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import ejs from "ejs";
 import path from "path";
 import sendMail from "../utils/send-mail";
 import { json } from "stream/consumers";
 import exp from "constants";
-import { sendToken } from "../utils/jwt";
+import {
+  accessTokenOptions,
+  refreshTokenOptions,
+  sendToken,
+} from "../utils/jwt";
+import { redis } from "../utils/redis";
+import { getUserById } from "../service/user.service";
 
 require("dotenv").config();
 
@@ -177,13 +183,79 @@ export const logoutUser = CatchAsyncError(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       res.cookie("access_token", "", { maxAge: 1 });
-      res.cookie("access_token", "", { maxAge: 1 });
+      res.cookie("refresh_token", "", { maxAge: 1 });
+      const userId = req.user?._id;
+      redis.del(userId);
       res.status(200).json({
         success: true,
         message: "Log out successfully",
       });
     } catch (error: any) {
-      return next(new ErrorHandler(error.message, error.statusCode));
+      return next(new ErrorHandler(error.message, error.statusCode || 400));
+    }
+  }
+);
+
+// update access token
+export const updateAccessToken = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const refresh_token = req.cookies.refresh_token as string;
+      const decoded = Jwt.verify(
+        refresh_token,
+        process.env.REFRESH_TOKEN as string
+      ) as JwtPayload;
+
+      const message = "could not refresh token";
+
+      if (!decoded) {
+        return next(new ErrorHandler(message, 400));
+      }
+
+      const session = await redis.get(decoded.id as string);
+
+      if (!session) {
+        return next(new ErrorHandler(message, 400));
+      }
+
+      const user = JSON.parse(session);
+
+      const access_token = Jwt.sign(
+        { id: user._id },
+        process.env.ACCESS_TOKEN as string,
+        {
+          expiresIn: "5m",
+        }
+      );
+
+      const refresh_token_new = Jwt.sign(
+        { id: user._id },
+        process.env.REFRESH_TOKEN as string,
+        { expiresIn: "2d" }
+      );
+
+      res.cookie("access_token", access_token, accessTokenOptions);
+      res.cookie("refresh_token", refresh_token_new, refreshTokenOptions);
+
+      res.status(200).json({
+        status: true,
+        access_token,
+      });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, error.statusCode || 400));
+    }
+  }
+);
+
+// get user details
+
+export const getUserDetails = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?._id;
+      getUserById(userId, res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, error.statusCode || 400));
     }
   }
 );
