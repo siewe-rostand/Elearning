@@ -234,6 +234,8 @@ export const updateAccessToken = CatchAsyncError(
         { expiresIn: "2d" }
       );
 
+      req.user = user;
+
       res.cookie("access_token", access_token, accessTokenOptions);
       res.cookie("refresh_token", refresh_token_new, refreshTokenOptions);
 
@@ -254,6 +256,48 @@ export const getUserDetails = CatchAsyncError(
     try {
       const userId = req.user?._id;
       getUserById(userId, res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, error.statusCode || 400));
+    }
+  }
+);
+
+// update user info
+
+interface IUpdateUserInfo {
+  name?: string;
+  email?: string;
+}
+
+export const updateUserInfo = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { email, name } = req.body as IUpdateUserInfo;
+      const userId = req.user?._id;
+      const user = await userModel.findById(userId);
+
+      if (email && user) {
+        const isEmailExist = await userModel.findOne({ email });
+        if (isEmailExist) {
+          return next(new ErrorHandler("Email already exist", 400));
+        }
+
+        user.email = email;
+      }
+
+      if (name && user) {
+        user.name = name;
+      }
+
+      await user?.save();
+
+      await redis.set(userId, JSON.stringify(user));
+
+      res.status(200).json({
+        success: true,
+        message: "User info updated successfully",
+        user,
+      });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, error.statusCode || 400));
     }

@@ -3,14 +3,23 @@ import userModel from "../models/user-model";
 import { CatchAsyncError } from "../middleware/catch_async_error";
 import ErrorHandler from "../utils/error_handler";
 import { sendToken } from "../utils/jwt";
+import { redis } from "../utils/redis";
 
 // get user by id
 export const getUserById = async (id: string, res: Response) => {
-  const user = await userModel.findById(id);
+  const userJson = await redis.get(id);
 
+  if (!userJson) {
+    return res.status(404).json({
+      success: false,
+      message: "User not found",
+    });
+  }
+
+  const user = JSON.parse(userJson);
   res.status(200).json({
     success: true,
-    user,
+    user: user,
   });
 };
 
