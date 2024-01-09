@@ -47,3 +47,47 @@ export const socialAuth = CatchAsyncError(
     }
   }
 );
+
+// update password
+
+interface IUpadtePasswordBody {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export const updatePassword = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { oldPassword, newPassword } = req.body as IUpadtePasswordBody;
+
+      if (!oldPassword || !newPassword)
+        return next(
+          new ErrorHandler("Please provide old password and new password", 400)
+        );
+
+      const userId = req.user?._id;
+      const user = await userModel.findById(userId).select("+password");
+
+      if (user) {
+        const isPasswordMatch = await user.comparePassword(oldPassword);
+        if (!isPasswordMatch) {
+          return next(new ErrorHandler("Password is incorrect", 400));
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        redis.set(userId, JSON.stringify(user));
+        res.status(200).json({
+          success: true,
+          message: "Password updated successfully",
+          user,
+        });
+      } else {
+        return next(new ErrorHandler("User not found", 404));
+      }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, error.statusCode || 400));
+    }
+  }
+);

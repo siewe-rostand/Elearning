@@ -9,7 +9,7 @@ import {
   updateUserInfo,
 } from "../controller/user-controller";
 import { isAuthenticated } from "../middleware/auth";
-import { socialAuth } from "../service/user.service";
+import { socialAuth, updatePassword } from "../service/user.service";
 
 const userRouter = express.Router();
 
@@ -28,5 +28,7 @@ userRouter.get("/user", isAuthenticated, getUserDetails);
 userRouter.post("/social-auth", socialAuth);
 
 userRouter.put("/user/edit", isAuthenticated, updateUserInfo);
+
+userRouter.put("/user/edit/password", isAuthenticated, updatePassword);
 
 export default userRouter;
