@@ -4,6 +4,7 @@ import { CatchAsyncError } from "../middleware/catch_async_error";
 import ErrorHandler from "../utils/error_handler";
 import { sendToken } from "../utils/jwt";
 import { redis } from "../utils/redis";
+import cloudinary from "cloudinary";
 
 // get user by id
 export const getUserById = async (id: string, res: Response) => {
@@ -86,6 +87,70 @@ export const updatePassword = CatchAsyncError(
       } else {
         return next(new ErrorHandler("User not found", 404));
       }
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, error.statusCode || 400));
+    }
+  }
+);
+
+//update user profile picture
+
+interface IUpdateProfilePictureBody {
+  avatar: string;
+}
+
+export const updateProfilePicture = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { avatar } = req.body as IUpdateProfilePictureBody;
+
+      const userId = req.user?._id;
+
+      const user = await userModel.findById(userId);
+      if (!avatar)
+        return next(new ErrorHandler("Please provide an image", 400));
+
+      if (avatar && user) {
+        // if user has an avatar
+        if (user?.avatar?.public_id) {
+          // first delete previous avatar
+          await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+          // save new avatar
+          const result = await cloudinary.v2.uploader.upload(avatar, {
+            folder: "avatars",
+            width: 150,
+            crop: "scale",
+          });
+
+          user.avatar = {
+            public_id: result.public_id,
+            url: result.secure_url,
+          };
+        } else {
+          // we update avatar if user login with social account
+
+          const result = await cloudinary.v2.uploader.upload(avatar, {
+            folder: "avatars",
+            width: 150,
+            crop: "scale",
+          });
+
+          user.avatar = {
+            public_id: result.public_id,
+            url: result.secure_url,
+          };
+        }
+      }
+
+      await user?.save();
+
+      await redis.set(userId, JSON.stringify(user));
+
+      res.status(200).json({
+        success: true,
+        message: "User profile picture updated successfully",
+        user,
+      });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, error.statusCode || 400));
     }

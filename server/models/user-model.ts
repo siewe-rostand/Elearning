@@ -15,8 +15,8 @@ export interface IUser extends Document {
   password: string;
   role: string;
   avatar: {
-    public_id: String;
-    url: String;
+    public_id: string;
+    url: string;
   };
   isVerified: boolean;
   courses: Array<{ courseId: String }>;

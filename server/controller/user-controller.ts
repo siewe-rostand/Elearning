@@ -134,6 +134,7 @@ export const activateUser = CatchAsyncError(
 
       res.status(201).json({
         success: true,
+        message: "Account activated successfully",
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, error.statusCode));
@@ -241,6 +242,7 @@ export const updateAccessToken = CatchAsyncError(
 
       res.status(200).json({
         status: true,
+        message: "Access token refreshed successfully",
         access_token,
       });
     } catch (error: any) {
