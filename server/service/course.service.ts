@@ -1,6 +1,7 @@
 import { Response, NextFunction } from "express";
 import courseModel from "../models/course.model";
 import { CatchAsyncError } from "../middleware/catch_async_error";
+import ErrorHandler from "../utils/error_handler";
 
 /// create course
 export const createCourse = CatchAsyncError(
