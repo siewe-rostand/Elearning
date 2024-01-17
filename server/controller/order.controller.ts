@@ -83,7 +83,7 @@ export const createOrder = CatchAsyncError(
         user: user?._id,
       });
 
-      course.purchase ? course.purchase++ : course.purchase;
+      course.purchase ? (course.purchase += 1) : course.purchase;
 
       await course.save();
 
