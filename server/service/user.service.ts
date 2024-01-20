@@ -167,3 +167,18 @@ export const getAllUserService = async (res: Response) => {
     users,
   });
 };
+
+// update user role --only for admin
+export const updateUserRoleService = async (
+  res: Response,
+  id: string,
+  role: string
+) => {
+  const user = await userModel.findByIdAndUpdate(id, { role }, { new: true });
+
+  res.status(200).json({
+    success: true,
+    message: "User role updated successfully",
+    user,
+  });
+};
