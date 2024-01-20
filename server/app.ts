@@ -24,7 +24,7 @@ app.use(
   })
 );
 //routes
-app.use("/api/v1", userRouter, userRouter, orderRouter, notificationRouter);
+app.use("/api/v1", userRouter, courseRouter, orderRouter, notificationRouter);
 
 //testing all api
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {

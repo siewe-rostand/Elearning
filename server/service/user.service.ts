@@ -156,3 +156,14 @@ export const updateProfilePicture = CatchAsyncError(
     }
   }
 );
+
+// get all users
+export const getAllUserService = async (res: Response) => {
+  const users = await userModel.find().sort({ createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    message: "All users gotten successfully",
+    users,
+  });
+};

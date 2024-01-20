@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { CatchAsyncError } from "../middleware/catch_async_error";
 import ErrorHandler from "../utils/error_handler";
 import cloudinary from "cloudinary";
-import { createCourse } from "../service/course.service";
+import { createCourse, getAllCoursesService } from "../service/course.service";
 import courseModel from "../models/course.model";
 import { log } from "console";
 import { redis } from "../utils/redis";
@@ -467,6 +467,18 @@ export const addReplyToReview = CatchAsyncError(
         message: "Reply added successfully",
         course,
       });
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
+    }
+  }
+);
+
+// get all courses --only admin
+
+export const adminGetAllCourses = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllCoursesService(res);
     } catch (error: any) {
       return next(new ErrorHandler(error.message, 500));
     }

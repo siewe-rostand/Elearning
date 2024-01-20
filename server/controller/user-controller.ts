@@ -14,7 +14,7 @@ import {
   sendToken,
 } from "../utils/jwt";
 import { redis } from "../utils/redis";
-import { getUserById } from "../service/user.service";
+import { getAllUserService, getUserById } from "../service/user.service";
 
 require("dotenv").config();
 
@@ -302,6 +302,18 @@ export const updateUserInfo = CatchAsyncError(
       });
     } catch (error: any) {
       return next(new ErrorHandler(error.message, error.statusCode || 400));
+    }
+  }
+);
+
+// get all users --only admin
+
+export const getAllUsers = CatchAsyncError(
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      getAllUserService(res);
+    } catch (error: any) {
+      return next(new ErrorHandler(error.message, 500));
     }
   }
 );

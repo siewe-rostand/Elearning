@@ -7,8 +7,9 @@ import {
   updateAccessToken,
   getUserDetails,
   updateUserInfo,
+  getAllUsers,
 } from "../controller/user-controller";
-import { isAuthenticated } from "../middleware/auth";
+import { authorizeRoles, isAuthenticated } from "../middleware/auth";
 import {
   socialAuth,
   updatePassword,
@@ -36,5 +37,7 @@ userRouter.put("/user/edit", isAuthenticated, updateUserInfo);
 userRouter.put("/user/edit/password", isAuthenticated, updatePassword);
 
 userRouter.put("/user/edit/picture", isAuthenticated, updateProfilePicture);
+
+userRouter.get("/users", isAuthenticated, authorizeRoles("admin"), getAllUsers);
 
 export default userRouter;
